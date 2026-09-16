@@ -54,12 +54,17 @@ describe('isolated TypeScript MCP execution', () => {
     expect(await run('return "still usable";')).toContain('still usable');
   });
 
-  it('bounds guest memory and reports invalid syntax without making calls', async () => {
+  it('reports invalid syntax without making calls', async () => {
     const invoke = vi.fn<McpCodeOptions['invoke']>();
     await expect(run('const x = ; await tools.write({});', { names: ['write'], invoke })).rejects.toThrow();
-    await expect(run('const x = []; while (true) x.push(new Array(100000).fill("x"));', { limits: { memoryBytes: 2 * 1024 * 1024 } })).rejects.toThrow();
     expect(invoke).not.toHaveBeenCalled();
   });
+
+  // QuickJS must allocate until its fixed 2 MiB guest limit; allow loaded CI
+  // workers time to reach that limit without weakening the production bound.
+  it('bounds guest memory', async () => {
+    await expect(run('const x = []; while (true) x.push(new Array(100000).fill("x"));', { limits: { memoryBytes: 2 * 1024 * 1024 } })).rejects.toThrow();
+  }, 45_000);
 
   it('stops unawaited calls and promises with no possible completion', async () => {
     await expect(run('await new Promise(() => {});')).rejects.toThrow(/cannot resolve/);
@@ -78,11 +83,36 @@ describe('isolated TypeScript MCP execution', () => {
   });
 
   it('expires the execution deadline and cancels a pending host call', async () => {
-    let aborted = false;
-    const invoke: McpCodeOptions['invoke'] = async (_name, _args, signal) => new Promise((_resolve, reject) => signal.addEventListener('abort', () => { aborted = true; reject(new Error('cancelled')); }, { once: true }));
-    await expect(run('await tools.read({});', { names: ['read'], invoke, limits: { timeoutMs: 1000 } })).rejects.toThrow(/timed out/);
-    expect(aborted).toBe(true);
-  });
+    const controller = new AbortController();
+    let aborted = false, entered!: () => void;
+    const started = new Promise<void>(resolve => { entered = resolve; });
+    const invoke: McpCodeOptions['invoke'] = async (_name, _args, signal) => new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => { aborted = true; reject(new Error('cancelled')); }, { once: true });
+      entered();
+    });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    let outcome: Promise<{ ok: true } | { ok: false; error: unknown }> | undefined;
+    try {
+      const execution = run('await tools.read({});', { names: ['read'], invoke, signal: controller.signal, limits: { timeoutMs: 1000 } });
+      // Keep worker startup on real time; advance only the production deadline
+      // after the host call is pending, so startup contention cannot win the race.
+      outcome = execution.then(() => ({ ok: true as const }), error => ({ ok: false as const, error }));
+      const startupTimeout = new Promise<never>((_resolve, reject) => AbortSignal.timeout(20_000).addEventListener('abort', () => reject(new Error('MCP worker did not reach the host call within 20 seconds')), { once: true }));
+      const ready = await Promise.race([started.then(() => 'started' as const), outcome.then(() => 'settled' as const), startupTimeout]);
+      if (ready === 'settled') throw new Error('MCP execution settled before the host call started.');
+      await vi.advanceTimersByTimeAsync(1000);
+      const result = await outcome;
+      expect(result.ok).toBe(false);
+      if (result.ok) throw new Error('MCP execution completed instead of timing out.');
+      expect(result.error).toBeInstanceOf(Error);
+      expect((result.error as Error).message).toMatch(/timed out/);
+      expect(aborted).toBe(true);
+    } finally {
+      controller.abort();
+      if (outcome) await outcome;
+      vi.useRealTimers();
+    }
+  }, 30_000);
 
   it('limits call count, argument size, result size, and emitted UTF-8 output', async () => {
     const invoke = vi.fn<McpCodeOptions['invoke']>(async () => ({ content: [{ type: 'text', text: 'large result' }] }));
