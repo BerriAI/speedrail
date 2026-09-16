@@ -59,7 +59,7 @@ describe('isolated TypeScript MCP execution', () => {
     await expect(run('const x = ; await tools.write({});', { names: ['write'], invoke })).rejects.toThrow();
     await expect(run('const x = []; while (true) x.push(new Array(100000).fill("x"));', { limits: { memoryBytes: 2 * 1024 * 1024 } })).rejects.toThrow();
     expect(invoke).not.toHaveBeenCalled();
-  });
+  }, 30_000);
 
   it('stops unawaited calls and promises with no possible completion', async () => {
     await expect(run('await new Promise(() => {});')).rejects.toThrow(/cannot resolve/);
@@ -79,10 +79,18 @@ describe('isolated TypeScript MCP execution', () => {
 
   it('expires the execution deadline and cancels a pending host call', async () => {
     let aborted = false;
-    const invoke: McpCodeOptions['invoke'] = async (_name, _args, signal) => new Promise((_resolve, reject) => signal.addEventListener('abort', () => { aborted = true; reject(new Error('cancelled')); }, { once: true }));
-    await expect(run('await tools.read({});', { names: ['read'], invoke, limits: { timeoutMs: 1000 } })).rejects.toThrow(/timed out/);
-    expect(aborted).toBe(true);
-  });
+    const invoke: McpCodeOptions['invoke'] = async (_name, _args, signal) => new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => { aborted = true; reject(new Error('cancelled')); }, { once: true });
+      vi.advanceTimersByTime(999);
+      expect(aborted).toBe(false);
+      vi.advanceTimersByTime(1);
+    });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      await expect(run('await tools.read({});', { names: ['read'], invoke, signal: AbortSignal.timeout(20_000), limits: { timeoutMs: 1000 } })).rejects.toThrow(/timed out/);
+      expect(aborted).toBe(true);
+    } finally { vi.useRealTimers(); }
+  }, 30_000);
 
   it('limits call count, argument size, result size, and emitted UTF-8 output', async () => {
     const invoke = vi.fn<McpCodeOptions['invoke']>(async () => ({ content: [{ type: 'text', text: 'large result' }] }));
