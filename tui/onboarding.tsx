@@ -90,7 +90,7 @@ export function Onboarding({ controller, initial, onClose, quick = false }: { co
   const canSave = saveEnabled({ step, kind, driver, worker, shuntOk:kind==='litefusion'||shuntConfigured(shunt,state.settings.providers), providerConfigured });
   return <Menu title="Review your setup" search={false} onClose={() => { setFrom('walkthrough'); setStep(backFromReview(kind)); }} footer={state.notice || (kind==='litefusion'?'Your lead plans and selects specialists. Use /models to customize.':`${SHUNT_DESCRIPTION} Use /models for advanced options.`)} items={[
     { id: 'architecture', label: `Architecture: ${SETUP_ARCHITECTURES.find(item => item.kind === kind)!.name}`, description: SETUP_ARCHITECTURES.find(item => item.kind === kind)!.description, action: () => { setFrom('walkthrough'); setStep('architecture'); } },
-    { id: 'driver', label: `${kind === 'single' ? 'Model' : kind==='litefusion'?'Lead':'Driver'}: ${driver.model || 'Choose a model'}`, description: modelGuidance(kind, 'driver'), action: () => openRole('driver', true) },
+    { id: 'driver', label: `${kind === 'single' || kind === 'litellm-specific' ? 'Model' : kind==='litefusion'?'Lead':'Driver'}: ${driver.model || 'Choose a model'}`, description: modelGuidance(kind, 'driver'), action: () => openRole('driver', true) },
     ...(roles.includes('worker') ? [{ id: 'worker', label: `${workerLabel(kind)}: ${worker?.model || 'Choose a model'}`, description: modelGuidance(kind, 'worker'), action: () => openRole('worker', true) }] : []),
     ...(kind==='litefusion'?[{id:'litefusion',label:readiness?liteFusionReadinessLabel(readiness):'Connecting specialists…',description:readiness?.discoveryError??'View all 63 task assignments and handoffs',action:()=>setView('litefusion')}]:[]),
     ...(kind!=='litefusion'?[{ id: 'advanced', label: `Advanced settings · Shunt ${shunt.enabled ? 'On' : 'Off'}`, description: `${SHUNT_DESCRIPTION} ${shunt.enabled && !shuntConfigured(shunt, state.settings.providers) ? 'Choose a Shunt model to enable it.' : SHUNT_MODEL_HINT}`, action: () => setView('advanced') }]:[]),
@@ -101,7 +101,7 @@ export function Onboarding({ controller, initial, onClose, quick = false }: { co
   ]} />;
 
   async function save() {
-    const patch = kind==='litefusion'?{...liteFusionConfiguration(fusion,{...driver,modelReasoning:initial.modelReasoning}),permissionMode}:{ ...driver, architecture: kind === 'single' ? null : worker ? selectArchitecture(kind, worker) : null, permissionMode, shunt };
+    const patch = kind==='litefusion'?{...liteFusionConfiguration(fusion,{...driver,modelReasoning:initial.modelReasoning}),permissionMode}:{ ...driver, architecture: kind === 'single' ? null : kind === 'litellm-specific' ? {kind} : worker ? selectArchitecture(kind, worker) : null, permissionMode, shunt };
     if (!await controller.configure(patch, revision)) return;
     setRevision(controller.detail!.session.configRevision ?? 0);
     if (await controller.action('Remembering setup', () => controller.client.api('/workspace-preferences', { ...controller.detail!.session, ...patch, setupComplete: true }))) onClose();

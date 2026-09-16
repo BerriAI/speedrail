@@ -1,0 +1,61 @@
+{
+  "frozenAt": "2026-09-15T20:04:46.632690+00:00",
+  "commit": "7aba62b43ee2ce711ad8ce7fe282e2fea06c3f36",
+  "harnessVersion": "2026-09-15.11",
+  "cases": [
+    "openai-schema-patterns",
+    "databricks-unity",
+    "mai-image-params",
+    "bedrock-thinking",
+    "router-retry-deployment",
+    "router-request-tags",
+    "team-router-names"
+  ],
+  "trialsPerCase": 1,
+  "candidate": {
+    "architecture": "litellm-specific",
+    "model": "fireworks_ai/deepseek-v4p1-flash",
+    "effort": "high",
+    "contextWindow": 1048576
+  },
+  "baseline": {
+    "harness": "Codex CLI",
+    "model": "gpt-6-astra",
+    "effort": "high"
+  },
+  "timeoutSeconds": 900,
+  "evaluationProtocol": 3,
+  "snapshotRevision": 2,
+  "promptRevision": 3,
+  "selection": "One follow-up candidate trial per task, label replication-v11-r1, frozen before inspecting comparison acceptance results. All follow-up runs retained. Compare separately against the three existing Astra trials; do not pool versions.",
+  "limitations": [
+    "Retrospective curated requirements; curator inspected reference changes during qualification.",
+    "Not a chronological future-PR split or a blind study.",
+    "Astra baseline batch began before candidate freeze; outcomes were not inspected for candidate iteration.",
+    "Independent tasks may run concurrently on a shared host. Latency is observational.",
+    "Historical reference tests are a partial oracle; passing does not prove all requirements or regressions."
+  ],
+  "sourceSha256": {
+    "scripts/litellm-harness/analyze.py": "68a24acf92a502847d945e89331f04bd47247e887f7dc494cc440fddfe065cae",
+    "scripts/litellm-harness/budget.ts": "dae1d6dd98bac59289ffcf3929943e5edaac799e5bea12576199912d594eab18",
+    "scripts/litellm-harness/extract-archives.py": "d602e202d529ebad3f9bd33e76e504453037e43668103e8899791539330ea8d1",
+    "scripts/litellm-harness/gateway.ts": "2e01a3a04a9e337ec1724e17c937e6593fc2cbdbd89f7f4564b5b62d334c5fe2",
+    "scripts/litellm-harness/offline-pytest.py": "1bf5619c84d9df3edbf18d3a63e8bbad377e556f0c53c6e547bc9f51b30f6f94",
+    "scripts/litellm-harness/prepare.py": "891e7f5824705ca2a4bef2466ac07682db51f6102e3af471d9ccf25be1580bc8",
+    "scripts/litellm-harness/report.py": "ca2f076faa367be35db44f36269f5ece47491d1cd6224e703b4e962a1e7eef3c",
+    "scripts/litellm-harness/run.ts": "41e765e10b43354f1fc5578ae5330d79d9671e8750199a4cc253dd52c8b38c97",
+    "scripts/litellm-harness/score.py": "e1ce6fa9d99ecb08b831a0890ff72329c2fb54195c32940df7dd847472282bd8",
+    "scripts/litellm-harness/task-prompts.json": "a2404c5c015ce75ce596c9e90258aef4c1d76c5f6839f91f7d8eef70ac2579a3",
+    "scripts/litellm-harness/validate.py": "30cd852004afd586362b9763f12c535e11f5d7afa6ee1e3883190c4ddf09ffd8",
+    "server/app.ts": "8bee1d32f6570ed4e7109d2c00f294d64437f730f7421c7857fddf31a5ec398e",
+    "server/litellm-harness.ts": "516879a2ee75796f1d0345226849eb859168d470ba82598ec83d2927537efff1",
+    "server/receipts.ts": "996ce8eff76fbc419a3b2368f2f80b6f3ebb435eae7559f48f7704eecc098c3c",
+    "server/runner.ts": "83027d443cd16080c88b9b8f1cd9f9c38dd82c09fcd08e88c324f27542e468f3",
+    "server/tools.ts": "e781384155296b2200b95b54b39525271f953401e653a8549b6317b98563dcb7",
+    "shared/architectures.ts": "bd0bce600bcd80185f70b4b50e87cb6113ff9d4ca9a18629dc7079a4744db3cf",
+    "shared/receipts.ts": "47896e808d0bf3b05a7c51462123b106fe102a11ae7ebbb8397524b8515e8b69",
+    "shared/setup.ts": "e937cd14322fbfc363b73b45852452072e5e0bc5f17cb954733c0dd225c88089",
+    "shared/setupFlow.ts": "df38464545c27fd805e5c30312e2d228e540c88784c67c40111591437ab15c2e"
+  },
+  "developmentRationale": "Selected from development evidence: cached-streaming crashes fixed in the empty-choices replay; DashScope checks improved from 2/10 in the plain High run to 10/10. Budget remains incomplete; guides are hypotheses, not correctness guarantees."
+}

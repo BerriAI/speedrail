@@ -1,12 +1,13 @@
-# Multi-model architectures
+# Coding architectures
 
-Litespeed treats the arrangement of models as a session setting. The web picker exposes Single model, LiteFusion, Sidekick Fusion, Team Fusion, and Expert Fusion. Models are configurable routes to connected providers, not models bundled with Litespeed. File Pipeline is not implemented.
+Litespeed treats the arrangement of models as a session setting. The web picker exposes Single model, LiteLLM specific, LiteFusion, Sidekick Fusion, Team Fusion, and Expert Fusion. Models are configurable routes to connected providers, not models bundled with Litespeed. File Pipeline is not implemented.
 
 The aim is to reserve stronger models for the work that benefits from them while cheaper models handle suitable assignments. Persistent sidekick context is inspired by [Cognition’s Devin Fusion](https://cognition.com/blog/devin-fusion). Quality, cost, and latency need to be measured for each model combination and task.
 
 ## Arrangements
 
 - **LiteFusion (recommended):** one persistent lead routes task categories to versioned model/reasoning pairs. It can work directly, retain compatible serial workers, start isolated parallel workers, or escalate with evidence. See the [LiteFusion guide](litefusion.md) and [all 63 task cards](litefusion-tasks.md).
+- **LiteLLM specific:** one model with repository navigation, focused verification reminders and one review after edits. See the [LiteLLM harness guide](litellm-harness.md).
 - **Single model:** the existing general-purpose tool loop.
 - **Sidekick Fusion:** the lead plans, delegates, and reviews; a write-capable sidekick retains context across compatible handoffs. Foreground calls wait for its report while the server remains responsive to events, steering, approvals, and cancellation. The two model calls do not run simultaneously during a handoff.
 - **Team Fusion:** the lead uses `delegate` for fresh task-scoped workers. Each receives a self-contained brief with relevant paths, constraints, and acceptance criteria. Source editing belongs to workers; the lead inspects the result and uses `verify` for combined checks.
@@ -19,6 +20,7 @@ Team and Expert drivers cannot invoke arbitrary Bash or connected tools to bypas
 `shared/architectures.ts` defines the selection union, role metadata, and route helpers; `server/app.ts` validates API input. A selection is:
 
 ```json
+{"kind":"litellm-specific"}
 {"kind":"sidekick-fusion","sidekick":{"providerId":"gateway","model":"fast-model"}}
 {"kind":"team-fusion","worker":{"providerId":"gateway","model":"fast-model"}}
 {"kind":"expert-fusion","expert":{"providerId":"gateway","model":"strong-model"}}

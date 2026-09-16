@@ -286,7 +286,7 @@ function SessionApp({ controller, router, onQuit, chooseTheme, themeName, themeM
   const activeWorkers = detail?.delegations?.filter(task => task.status === 'running') ?? [];
   const actor = activeWorkers.length > 1 ? `${activeWorkers.length} ${activeWorkers.every(task => task.role === 'expert') ? 'experts' : 'workers'}` : activeWorkers.length ? workerLabels(detail!).get(`${activeWorkers[0].parentMessageId}:${activeWorkers[0].toolCallId}`) || 'Research' : 'Driver';
   const model = detail ? effectiveModel(detail.session) : null;
-  const modelSuffix = detail?.session.mode === 'build' && detail.session.architecture ? ` + ${architectureInfo(detail.session.architecture.kind).roles[0]?.id ?? 'specialists'}` : detail?.session.mode === 'plan' && detail.session.planner ? ' · planner' : '';
+  const modelSuffix = detail?.session.architecture?.kind==='litellm-specific' ? ` · LiteLLM${detail.session.mode==='plan'&&detail.session.planner?' · planner':''}` : detail?.session.mode === 'build' && detail.session.architecture ? ` + ${architectureInfo(detail.session.architecture.kind).roles[0]?.id ?? 'specialists'}` : detail?.session.mode === 'plan' && detail.session.planner ? ' · planner' : '';
   const modelWidth = Math.max(18, Math.floor((width - (busy ? 36 : 12)) / 2) - 4);
   const modelName = terminalText(model?.model.split('/').at(-1) || 'Choose model');
   const modelSpace = Math.max(1, modelWidth - modelSuffix.length);

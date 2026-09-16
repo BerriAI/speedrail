@@ -26,7 +26,7 @@ export function Onboarding({ settings, selection, workspace, onSave, onClose, re
   const [baseUrl, setBaseUrl] = useState(gateway.baseUrl), [apiKey, setApiKey] = useState('');
   const [connection, setConnection] = useState('');
   const label = kind === 'expert-fusion' ? 'Expert' : kind === 'team-fusion' ? 'Worker' : 'Sidekick';
-  const valid = (kind==='litefusion'||!shuntPending&&shuntConfigured(draft.shunt,settings.providers)) && Boolean(draft.model && settings.providers.some(provider => provider.id === draft.providerId) && (kind === 'single' || kind === 'litefusion' || worker?.model && settings.providers.some(provider => provider.id === worker.providerId)));
+  const valid = (kind==='litefusion'||!shuntPending&&shuntConfigured(draft.shunt,settings.providers)) && Boolean(draft.model && settings.providers.some(provider => provider.id === draft.providerId) && (kind === 'single' || kind === 'litefusion' || kind === 'litellm-specific' || worker?.model && settings.providers.some(provider => provider.id === worker.providerId)));
   useEffect(()=>{
     if(kind!=='litefusion'||fusion.lead||selection.architecture?.kind==='litefusion')return;
     const providerId=specialistGateway(settings.providers,draft.providerId);if(!providerId)return;
@@ -48,7 +48,7 @@ export function Onboarding({ settings, selection, workspace, onSave, onClose, re
   }
   async function save() {
     setSaving(true); setError('');
-    try { await onSave(kind==='litefusion'?{...draft,...liteFusionConfiguration(fusion,draft)}:{ ...draft, architecture: kind === 'single' ? null : selectArchitecture(kind, worker!) }); onClose(); }
+    try { await onSave(kind==='litefusion'?{...draft,...liteFusionConfiguration(fusion,draft)}:{ ...draft, architecture: kind === 'single' ? null : kind === 'litellm-specific' ? {kind} : selectArchitecture(kind, worker!) }); onClose(); }
     catch (error) { setError(errorMessage(error)); } finally { setSaving(false); }
   }
   if (skills) return <Modal title="Import a Claude/Codex skill" onClose={() => setSkills(false)}><SkillImporter workspace={workspace} onClose={() => setSkills(false)} onImported={() => setSkills(false)} /></Modal>;
@@ -66,8 +66,8 @@ export function Onboarding({ settings, selection, workspace, onSave, onClose, re
         {simple && <label className="setup-architecture">Setup<select aria-label="Setup architecture" value={kind} onChange={event => { setKind(event.target.value as typeof kind); setOpen(null); }}>{SETUP_ARCHITECTURES.map(item => <option key={item.kind} value={item.kind}>{item.name}{item.recommended ? ' · Recommended' : ''}</option>)}</select></label>}
         <p className="field-hint">{SETUP_ARCHITECTURES.find(item => item.kind === kind)?.description}</p>
         {!settings.providers.length ? <p className="field-hint">Connect a provider to see its models.</p> : <div className="setup-models">
-          <ModelField simple hint={modelGuidance(kind, 'driver')} label={kind === 'single' ? 'Model' : kind==='litefusion'?'Lead':'Driver'} settings={settings} selection={draft} value={draft.model ? draft : null} onChange={route => {if(kind==='litefusion')changeFusion(withLiteFusionLead(fusion,route,fusion.lead?.effort));else setDraft({...draft,...route});}} onReasoning={() => {}} open={open === 'driver'} onOpen={value => setOpen(value ? 'driver' : null)} />
-          {kind !== 'single' && kind !== 'litefusion' && <ModelField simple hint={modelGuidance(kind, 'worker')} label={label} settings={settings} selection={draft} value={worker} onChange={setWorker} onReasoning={() => {}} open={open === 'worker'} onOpen={value => setOpen(value ? 'worker' : null)} />}
+          <ModelField simple hint={modelGuidance(kind, 'driver')} label={(kind === 'single' || kind === 'litellm-specific') ? 'Model' : kind==='litefusion'?'Lead':'Driver'} settings={settings} selection={draft} value={draft.model ? draft : null} onChange={route => {if(kind==='litefusion')changeFusion(withLiteFusionLead(fusion,route,fusion.lead?.effort));else setDraft({...draft,...route});}} onReasoning={() => {}} open={open === 'driver'} onOpen={value => setOpen(value ? 'driver' : null)} />
+          {kind !== 'single' && kind !== 'litefusion' && kind !== 'litellm-specific' && <ModelField simple hint={modelGuidance(kind, 'worker')} label={label} settings={settings} selection={draft} value={worker} onChange={setWorker} onReasoning={() => {}} open={open === 'worker'} onOpen={value => setOpen(value ? 'worker' : null)} />}
         </div>}
         {kind==='litefusion' && <LiteFusionSettings compact value={fusion} settings={settings} onChange={changeFusion}/>}
         {kind!=='litefusion'&&<ShuntSettings settings={settings} selection={draft} onChange={shunt=>setDraft({...draft,shunt})} onPending={setShuntPending}/>}

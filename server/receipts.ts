@@ -1,5 +1,6 @@
 import type { Message, ToolCall } from '../shared/types.js';
 import { checkCommandKey, checkFailed, isCheckCommand, type TurnReceipts } from '../shared/receipts.js';
+import { isLitellmDefinitionRead } from './litellm-harness.js';
 export { verificationNotice as receiptsNotice } from '../shared/verification.js';
 
 /** Pure end-of-turn accounting from tool receipts. Walks the assistant
@@ -37,12 +38,12 @@ export function computeReceipts(messages: Message[], sinceMessageId: string | un
       }
       if (call.status !== 'completed') continue;
       const path = call.name==='code_write'&&typeof call.args.target==='string'?call.args.target:typeof call.args.path==='string'?call.args.path:undefined;
-      if (call.name === 'read_file' && !call.routing && path !== undefined) {
+      if (path !== undefined && !call.routing && (call.name === 'read_file' || call.name === 'litellm_context' && typeof call.args.symbol==='string' && isLitellmDefinitionRead(result(call),path))) {
         if (!firstRead.has(path)) firstRead.set(path, seq);
       } else if ((call.name === 'write_file' || call.name === 'edit_file' || call.name === 'code_write') && path !== undefined) {
         if (!lastChange.has(path)) filesChanged.push(path); // Dedupe, first-change order.
         lastChange.set(path, seq);
-        // Exact read_file path match only, strictly earlier in this turn. A file
+        // Exact file/definition read path match, strictly earlier in this turn. A file
         // surfacing inside grep/glob RESULT text is too fuzzy to prove the model
         // looked at it, so those never clear the flag (documented limitation).
         const read = firstRead.get(path);

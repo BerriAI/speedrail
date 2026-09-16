@@ -15,7 +15,7 @@ export type SetupStep = 'architecture' | 'gateway' | 'driver' | 'worker' | 'revi
 type SetupKind = 'single' | import('./architectures.js').ArchitectureKind;
 
 export function isFusion(kind: SetupKind): boolean {
-  return kind !== 'single';
+  return kind !== 'single' && kind !== 'litellm-specific';
 }
 
 /** The model-role steps required after the architecture choice, in order.

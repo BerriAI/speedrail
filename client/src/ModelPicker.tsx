@@ -114,6 +114,7 @@ export function ModelPicker({ disabled, settings, selection, onChange, onClose, 
     }
     setView(kind);
     if(kind==='single')onChange({...selection,architecture:null,planner:null,shunt:null,architectureConfigurations});
+    else if(kind==='litellm-specific')onChange({...selection,architecture:{kind},planner:null,shunt:null,architectureConfigurations});
     else if(worker)onChange({...selection,architecture:selectArchitecture(kind,worker),architectureConfigurations});
   }
   function reasoning(value: ModelRoute, effort: string) {
@@ -140,10 +141,10 @@ export function ModelPicker({ disabled, settings, selection, onChange, onClose, 
       </div>
       <section className="model-roles" aria-label="Models">
         <div className="model-column-head"><span>Model</span><span>Reasoning</span></div>
-        {field('model', view === 'single' ? 'Model' : view==='litefusion'?'Lead':'Driver', route)}
-        {view !== 'single' && view !== 'litefusion' && field('worker', workerLabel, worker)}
+        {field('model', (view === 'single' || view === 'litellm-specific') ? 'Model' : view==='litefusion'?'Lead':'Driver', route)}
+        {view !== 'single' && view !== 'litefusion' && view !== 'litellm-specific' && field('worker', workerLabel, worker)}
         {pending && <p className="field-hint">Choose a {workerLabel.toLowerCase()} to enable {arrangement.name}.</p>}
-        {(view === 'team-fusion' || view === 'expert-fusion') && <label className="model-setting-row">Workers at once<select aria-label="Workers at once" disabled={pending} value={selection.architecture && selection.architecture.kind !== 'sidekick-fusion' ? selection.architecture.concurrency ?? 'auto' : 'auto'} onChange={event => { if (selection.architecture && selection.architecture.kind !== 'sidekick-fusion') { const { concurrency: _, ...architecture } = selection.architecture; onChange({ ...selection, architecture: event.target.value === 'auto' ? architecture : { ...architecture, concurrency: Number(event.target.value) as 1 | 2 | 3 | 4 } }); } }}><option value="auto">All requested · default</option>{[1, 2, 3, 4].map(count => <option key={count} value={count}>{count === 1 ? '1 · sequential' : `${count} · parallel`}</option>)}</select></label>}
+        {(view === 'team-fusion' || view === 'expert-fusion') && <label className="model-setting-row">Workers at once<select aria-label="Workers at once" disabled={pending} value={selection.architecture && (selection.architecture.kind === 'team-fusion' || selection.architecture.kind === 'expert-fusion') ? selection.architecture.concurrency ?? 'auto' : 'auto'} onChange={event => { if (selection.architecture && (selection.architecture.kind === 'team-fusion' || selection.architecture.kind === 'expert-fusion')) { const { concurrency: _, ...architecture } = selection.architecture; onChange({ ...selection, architecture: event.target.value === 'auto' ? architecture : { ...architecture, concurrency: Number(event.target.value) as 1 | 2 | 3 | 4 } }); } }}><option value="auto">All requested · default</option>{[1, 2, 3, 4].map(count => <option key={count} value={count}>{count === 1 ? '1 · sequential' : `${count} · parallel`}</option>)}</select></label>}
       </section>
       {selection.architecture?.kind==='litefusion' && <LiteFusionSettings value={selection.architecture} settings={settings} onChange={architecture=>onChange({...selection,...liteFusionConfiguration(architecture,selection)})} />}
       {view!=='litefusion'&&<ShuntSettings settings={settings} selection={selection} onChange={value=>onChange({...selection,shunt:value})} onPending={setShuntPending} onReasoning={reasoning} />}

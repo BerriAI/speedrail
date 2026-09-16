@@ -243,6 +243,9 @@ export function toolRow(call: ToolCall): ToolRowModel {
         body: { kind: 'diff', path: filePath, diff },
       };
     }
+    case 'litellm_context': {
+      return {...base,icon:'→',text:`LiteLLM ${str(args.path)||str(args.query)||'repository map'}${args.symbol?` · ${str(args.symbol)}`:''}`,pending:'Finding LiteLLM code and tests…'};
+    }
     case 'read_file': {
       const label = `Read ${baseName(str(args.path))} ${inlineArgs(args, ['path'])}`.trimEnd();
       return { ...base, icon: '→', text: label, pending: 'Reading file…' };

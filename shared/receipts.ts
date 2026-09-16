@@ -18,8 +18,8 @@ export interface TurnReceipts {
    * "you edited after your tests passed" catch. Empty when no checks ran
    * (that case is already reported as "no checks were run"). */
   filesChangedAfterLastCheck: string[];
-  /** Files changed with no completed read_file of the exact same path string
-   * earlier in the same turn ("wrote without looking"). Exact read_file
+  /** Files changed with no completed read_file or LiteLLM definition read of the exact same path string
+   * earlier in the same turn ("wrote without looking"). Exact read
    * args.path match only: a file merely appearing inside grep/glob RESULT
    * content is too fuzzy to prove the model looked at it, and path spelling
    * variants ('a.ts' vs './a.ts') are not unified — a deliberate, documented

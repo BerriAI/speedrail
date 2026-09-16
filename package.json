@@ -32,6 +32,7 @@
     "check": "npm run typecheck && npm test && npm run build",
     "test:tui:handoff": "node scripts/test-tui-handoff.mjs",
     "test:tui:litefusion": "node scripts/test-tui-litefusion.mjs",
+    "test:tui:litellm": "node scripts/test-tui-litellm.mjs",
     "test:tui": "node scripts/test-tui.mjs",
     "test:tui:queue": "node scripts/test-tui-queue.mjs",
     "test:tui:stream": "node scripts/test-tui-stream.mjs",

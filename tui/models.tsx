@@ -54,12 +54,12 @@ export function ModelSettings({ controller, initial, settings, onClose, onProvid
       try{const result=await controller.client.api<{selection:LiteFusionSelection;discoveryError?:string}>(`/litefusion/preset?providerId=${encodeURIComponent(specialistGateway(settings.providers,draft.providerId))}`);updateFusion(result.selection);setKind(next);back();if(result.discoveryError)controller.notice(`Preset loaded; gateway discovery failed: ${result.discoveryError}`);}
       catch(error){controller.notice((error as Error).message);}finally{setLoading(false);}return;
     }
-    setKind(next);setDraft({...draft,architecture:next==='single'?null:worker?selectArchitecture(next,worker):null,planner:null,shunt:null});back();
+    setKind(next);setDraft({...draft,architecture:next==='single'?null:next==='litellm-specific'?{kind:next}:worker?selectArchitecture(next,worker):null,planner:null,shunt:null});back();
   }
   if(view==='litefusion'&&fusion)return <LiteFusionSettings controller={controller} settings={settings} value={fusion} onChange={updateFusion} onClose={back}/>;
   if(view==='advanced')return <ShuntSettings controller={controller} settings={settings} value={draft.shunt??{enabled:false}} onChange={shunt=>setDraft({...draft,shunt})} onClose={back} reasoning={draft.shunt?.model?draft.modelReasoning[JSON.stringify([draft.shunt.model.providerId,draft.shunt.model.model])]:undefined} onReasoning={()=>setView('reasoning:shunt')}/>;
   if(view==='architecture')return <Menu title="Architecture" search={false} onClose={back} footer={loading?'Loading preset…':state.notice} items={SETUP_ARCHITECTURES.map(item=>({id:item.kind,label:`${item.name}${item.recommended?' · Recommended':''}`,description:item.description,disabled:loading,action:()=>{void chooseArchitecture(item.kind);}}))}/>;
-  if(view.startsWith('model:'))return <ModelChooser controller={controller} settings={settings} value={route??draft} title={view==='model:worker'?workerLabel:view==='model:planner'?'Planner':kind==='single'?'Model':fusion?'Lead':'Driver'} onClose={back} onChange={value=>{
+  if(view.startsWith('model:'))return <ModelChooser controller={controller} settings={settings} value={route??draft} title={view==='model:worker'?workerLabel:view==='model:planner'?'Planner':(kind==='single'||kind==='litellm-specific')?'Model':fusion?'Lead':'Driver'} onClose={back} onChange={value=>{
     if(view==='model:worker'&&kind!=='single')setDraft({...draft,architecture:selectArchitecture(kind,value)});
     else if(view==='model:planner')setDraft({...draft,planner:value});
     else if(fusion)updateFusion(withLiteFusionLead(fusion,value,fusion.lead?.effort));
@@ -74,8 +74,8 @@ export function ModelSettings({ controller, initial, settings, onClose, onProvid
   ];
   return <Menu title="Models" search={false} onClose={onClose} footer={state.notice||(initial.status==='running'||initial.status==='waiting'?'Save queues this configuration after active work finishes.':'Save applies changes · Esc cancels this draft')} items={[
     {id:'architecture',label:`Architecture: ${SETUP_ARCHITECTURES.find(item=>item.kind===kind)!.name}`,action:()=>setView('architecture')},
-    ...fields('driver',kind==='single'?'Model':fusion?'Lead':'Driver',draft),
-    ...(kind!=='single'&&kind!=='litefusion'?fields('worker',workerLabel,worker):[]),
+    ...fields('driver',(kind==='single'||kind==='litellm-specific')?'Model':fusion?'Lead':'Driver',draft),
+    ...(kind!=='single'&&kind!=='litefusion'&&kind!=='litellm-specific'?fields('worker',workerLabel,worker):[]),
     ...(draft.architecture?.kind==='team-fusion'||draft.architecture?.kind==='expert-fusion'?[{id:'workers',label:`Workers at once: ${draft.architecture.concurrency??'Automatic'}`,action:()=>setView('concurrency')}]:[]),
     ...(fusion?[{id:'litefusion',label:'LiteFusion policy · 63 task routes and handoffs',action:()=>setView('litefusion')}]:[
       {id:'advanced',label:`Advanced settings · Shunt ${draft.shunt?.enabled?'On':'Off'}`,action:()=>setView('advanced')},
@@ -83,7 +83,7 @@ export function ModelSettings({ controller, initial, settings, onClose, onProvid
       ...(draft.planner?fields('planner','Planner',draft.planner):[]),
     ]),
     {id:'style',label:`Output style: ${draft.outputStyle||'Default'}`,action:()=>setView('style')},
-    {id:'save',separatorBefore:true,label:state.pending?'Saving…':'Save',disabled:Boolean(state.pending)||!shuntConfigured(draft.shunt,settings.providers)||!draft.model.trim()||(kind!=='single'&&kind!=='litefusion'&&!worker),action:()=>{void controller.configureArchitecture(draft,initial.configRevision??0,initial.pendingArchitecture?.id??null).then(saved=>{if(saved)onClose();});}},
+    {id:'save',separatorBefore:true,label:state.pending?'Saving…':'Save',disabled:Boolean(state.pending)||!shuntConfigured(draft.shunt,settings.providers)||!draft.model.trim()||(kind!=='single'&&kind!=='litefusion'&&kind!=='litellm-specific'&&!worker),action:()=>{void controller.configureArchitecture(draft,initial.configRevision??0,initial.pendingArchitecture?.id??null).then(saved=>{if(saved)onClose();});}},
     {id:'providers',label:'Manage providers',action:onProviders},
   ]}/>;
 }

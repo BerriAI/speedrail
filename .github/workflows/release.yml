@@ -35,6 +35,7 @@ jobs:
       - run: npm run test:tui:stream
       - run: npm run test:tui:flow
       - run: npm run test:tui:litefusion
+      - run: npm run test:tui:litellm
       - run: npm run test:tui:handoff
       - run: node scripts/release/package.mjs
       - run: node scripts/release/smoke.mjs

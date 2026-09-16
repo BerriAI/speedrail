@@ -37,6 +37,16 @@ describe('check heuristic', () => {
 
 describe('computeReceipts', () => {
   const sessionId = 's1';
+  it('counts successful LiteLLM definition reads, but not outlines or missing symbols',()=>{
+    const navigation=(path:string,output:string):Spec=>({name:'litellm_context',args:{path,symbol:'transform'},output});
+    const receipts=computeReceipts([batch(sessionId,[
+      navigation('read.py','read.py:10-12\n10\tdef transform():\n11\t    pass'),
+      navigation('missing.py','{"error":"Symbol not found."}'),
+      {name:'litellm_context',args:{path:'outline.py'},output:'{"symbols":[{"name":"transform"}]}'},
+      write('read.py'),write('missing.py'),write('outline.py'),
+    ])],undefined);
+    expect(receipts.unreadFilesChanged).toEqual(['missing.py','outline.py']);
+  });
   it('accounts a mixed turn exactly across all six fields', () => {
     const accepted = user(sessionId, 'turn-1');
     const messages: Message[] = [

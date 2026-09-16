@@ -36,6 +36,10 @@ const mock=createServer(async(req,res)=>{
     emit({content:'The fixture exports a greeting. Shunt kept the source out of the caller context.'});
     if(prompt.includes('LIVE_SHUNT'))await new Promise<void>(resolve=>{const release=()=>{pendingDelegations.delete(release);res.off('close',release);resolve();};pendingDelegations.add(release);res.once('close',release);});
     if(res.destroyed)return;
+  }else if(prompt.includes('LITELLM_BROWSER')) {
+    if(!data.messages.some((message:any)=>message.role==='tool')) {
+      toolCall=true;emit({tool_calls:[{index:0,id:'litellm-navigation',type:'function',function:{name:'litellm_context',arguments:JSON.stringify({path:'litellm/example.py',symbol:'transform_request'})}}]});
+    }else emit({content:'Located transform_request and its existing tests. Planning complete.'});
   }else if(prompt.includes('LITEFUSION_HANDOFF_BROWSER')) {
     const child=data.messages.some((m:any)=>m.role==='system'&&String(m.content).includes('You are a LiteFusion worker.'));
     const call=(args:any)=>{toolCall=true;emit({tool_calls:[{index:0,id:`handoff-${providerRequests}`,type:'function',function:{name:'delegate',arguments:JSON.stringify(args)}}]});};

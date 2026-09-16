@@ -1,0 +1,32 @@
+{
+  "method": "Post-run inspection of shell commands, their outputs and external tool calls. Heuristic flags were manually reviewed. No flags is not proof of isolation.",
+  "affectedRuns": [
+    {
+      "run": "comparison-r1-databricks-unity-207c95bc",
+      "status": "out-of-snapshot access",
+      "evidence": "Read the live LiteLLM checkout and inspected Databricks provider implementation there. Later source was accessible."
+    },
+    {
+      "run": "comparison-r1-router-request-tags-39cc8797",
+      "status": "out-of-snapshot access",
+      "evidence": "Changed working directory to the live checkout to run tests and inspected its listing/import location. Test imports could resolve outside the historical snapshot."
+    },
+    {
+      "run": "comparison-r2-router-retry-deployment-fa7630ad",
+      "status": "out-of-snapshot access",
+      "evidence": "Issued a recursive retry_skip search against the live checkout. Its background command was not confined to the historical snapshot."
+    },
+    {
+      "run": "comparison-r3-bedrock-thinking-48763fd4",
+      "status": "out-of-snapshot access",
+      "evidence": "Read newer Bedrock source and DeepSeek reasoning tests directly from the live checkout."
+    },
+    {
+      "run": "qualified-single-dev-dashscope-rerank-4f2c29ec",
+      "status": "out-of-snapshot access",
+      "evidence": "The plain-model development baseline ran a test and searched compatible-api in the live checkout. Its comparison with the guided run is not controlled."
+    }
+  ],
+  "otherFlags": "Installed Python, Ruff and basedpyright paths were expected dependency access. Other reviewed flags were synthetic one-commit Git logs, unsuccessful changes to misspelled directories, listings of the run's own directory, or an unavailable guessed interpreter. No web or delegated tools were observed in the reviewed comparison traces.",
+  "interpretation": "Keep all raw scores and mark affected trials. They cannot support a fair superiority claim. The evaluator's offline instruction was insufficient; future controlled studies need an isolated filesystem containing only the task snapshot and installed dependencies, with reference material and live checkouts unavailable."
+}

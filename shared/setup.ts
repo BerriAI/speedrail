@@ -8,6 +8,7 @@ export const SETUP_ARCHITECTURES = [
 ];
 export function modelGuidance(kind: 'single' | ArchitectureKind, role: 'driver' | 'worker' | 'planner') {
   if (role === 'planner') return 'A strong reasoning model for planning before implementation.';
+  if (kind === 'litellm-specific') return 'Tuned for DeepSeek v4p1 Flash. Uses the selected model with LiteLLM code navigation and focused verification.';
   if (kind === 'single') return 'A capable coding model that can plan, implement, and test.';
   if (kind === 'litefusion') return role === 'driver' ? 'Your persistent lead: plans, routes tasks to specialists, and verifies results. Opus / high is the initial research candidate.' : 'Task-specific models and reasoning are resolved from the routing catalog and your gateway bindings.';
   if (role === 'driver') return kind === 'expert-fusion'
@@ -30,6 +31,7 @@ export const MODELS_AVAILABILITY_NOTE = 'Choose an available model from your pro
 
 /** The example model names to look for in a role, by capability family. */
 export function roleModelExamples(kind: 'single' | ArchitectureKind, role: 'driver' | 'worker'): string {
+  if (kind === 'litellm-specific') return 'DeepSeek v4p1 Flash';
   if (kind === 'single') return POWERFUL_MODEL_EXAMPLES;
   const expert = kind === 'expert-fusion';
   if (role === 'driver') return expert ? EFFICIENT_MODEL_EXAMPLES : POWERFUL_MODEL_EXAMPLES;
@@ -37,7 +39,7 @@ export function roleModelExamples(kind: 'single' | ArchitectureKind, role: 'driv
 }
 /** The step title for a model-role picker: base, driver, or the supporting role. */
 export function roleStepTitle(kind: 'single' | ArchitectureKind, role: 'driver' | 'worker'): string {
-  if (kind === 'single') return 'Choose your base model';
+  if (kind === 'single' || kind === 'litellm-specific') return 'Choose your base model';
   if (role === 'driver') return 'Choose your driver model';
   const label = kind === 'expert-fusion' ? 'expert' : kind === 'team-fusion' ? 'worker' : 'sidekick';
   return `Choose your ${label} model`;

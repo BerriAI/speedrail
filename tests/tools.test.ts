@@ -367,6 +367,19 @@ describe('safe command loading and undo', () => {
 });
 
 describe('grep', () => {
+  it('matches basename globs recursively within the requested directory', async () => {
+    await put('litellm/core/nested/conversion.py', 'choices = []');
+    await put('litellm/core/nested/conversion.ts', 'choices = []');
+    await put('elsewhere/other.py', 'choices = []');
+    expect(await tool('grep', { pattern: 'choices', path: 'litellm/core', glob: '*.py' })).toBe('litellm/core/nested/conversion.py:1:choices = []');
+    expect(await tool('grep', { pattern: 'choices', glob: 'litellm/core/*.py' })).toBe('No matches found.');
+    expect(await tool('grep', { pattern: 'choices', glob: 'litellm/core/**/*.py' })).toContain('nested/conversion.py');
+  });
+  it('finds late definitions in large source modules', async () => {
+    await put('litellm/router.py', '# skip\n'.repeat(45000) + 'def late_router_symbol(): pass\n');
+    const result = await tool('grep', { pattern: 'late_router_symbol', path: 'litellm/router.py' });
+    expect(result).toBe('litellm/router.py:45001:def late_router_symbol(): pass');
+  });
   it('searches regex and literal strings, with filters and case options', async () => {
     await put('src/a.ts', 'Alpha\nfoo.bar\nfooXbar\n');
     await put('src/b.js', 'Alpha');

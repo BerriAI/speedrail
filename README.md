@@ -45,6 +45,7 @@ For a web-only session, run `litespeed serve`. For development, use `npm run dev
 | --- | --- |
 | **Single model** | One model investigates, implements, and checks the task. |
 | **LiteFusion** · Recommended | One persistent lead routes 63 task categories to specific models and reasoning levels, with one shared hard/escalation map. |
+| **LiteLLM specific** | One model with LiteLLM source/test navigation, bounded reads and a review after changes. Tuned through DeepSeek v4p1 Flash runs; see the [guide and measured results](docs/litellm-harness.md). |
 | **Sidekick Fusion** | A strong driver plans and reviews; a cheaper sidekick keeps context across handoffs. |
 | **Team Fusion** | A strong driver assigns fresh cheaper workers, runs independent work in parallel, and verifies the combined result. |
 | **Expert Fusion** | A cheaper driver coordinates fresh strong experts and verifies their work. Independent assignments can run in parallel. |
